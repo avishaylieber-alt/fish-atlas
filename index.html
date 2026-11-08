@@ -30,16 +30,16 @@ body{
 }
 .globe{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.6;transition:opacity .8s ease}
 body.prep .globe{opacity:0}
-.cam{all:unset;cursor:pointer;position:fixed;z-index:6;right:max(24px,calc(env(safe-area-inset-right,0px) + 16px));bottom:calc(22px + env(safe-area-inset-bottom,0px));width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#2a5566;color:#fbfaf6;box-shadow:0 6px 18px -6px rgba(28,46,64,.45);transition:transform .2s,background .2s,opacity .4s}
-.cam svg{width:26px;height:26px}
-.cam:hover{background:#1f4352;transform:scale(1.06)}
+.cam{all:unset;cursor:pointer;position:fixed;z-index:6;right:max(24px,calc(env(safe-area-inset-right,0px) + 16px));bottom:calc(22px + env(safe-area-inset-bottom,0px));width:52px;height:52px;display:flex;align-items:center;justify-content:center;color:#2a5566;transition:transform .2s,color .2s,opacity .4s}
+.cam svg{width:40px;height:40px;stroke-width:1.2}
+.cam:hover{color:#1f4352;transform:scale(1.08)}
 .cam:focus-visible{outline:2px solid var(--ai);outline-offset:3px}
 body.prep .cam,body.sheet-open .cam{opacity:0;pointer-events:none}
 .sheet-bg.cam-bg{align-items:center;background:rgba(251,250,246,.6)}
 .sheet-bg .sheet.camv{border-radius:18px;width:min(460px,92vw);padding:24px;background:rgba(251,250,246,.97);text-align:center}
 .camv img{width:100%;max-height:52vh;object-fit:contain;border-radius:10px;background:#eef1f1;margin-top:14px}
 .camv p{margin:14px 0 4px;color:var(--ink-soft)}
-@media (max-width:720px){.cam{width:52px;height:52px;bottom:calc(70px + env(safe-area-inset-bottom,0px))}}
+@media (max-width:720px){.cam{width:48px;height:48px;bottom:calc(70px + env(safe-area-inset-bottom,0px))}}
 /* Prep room: the fish shop's back counter — tiled wall, brushed stainless steel bench */
 .shop{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:0;transition:opacity .7s ease;
   background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(40,52,60,.16)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='112' height='56'%3E%3Crect width='112' height='56' fill='%23dfe4e5'/%3E%3Crect x='1' y='1' width='110' height='26' rx='2' fill='%23f7f8f8'/%3E%3Crect x='1' y='29' width='54' height='26' rx='2' fill='%23f7f8f8'/%3E%3Crect x='57' y='29' width='54' height='26' rx='2' fill='%23f7f8f8'/%3E%3C/svg%3E");background-color:#eef1f1}
