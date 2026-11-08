@@ -39,7 +39,7 @@ body.prep .cam,body.sheet-open .cam{opacity:0;pointer-events:none}
 .sheet-bg .sheet.camv{border-radius:18px;width:min(460px,92vw);padding:24px;background:rgba(251,250,246,.97);text-align:center}
 .camv img{width:100%;max-height:52vh;object-fit:contain;border-radius:10px;background:#eef1f1;margin-top:14px}
 .camv p{margin:14px 0 4px;color:var(--ink-soft)}
-@media (max-width:720px){.cam{width:48px;height:48px;bottom:calc(70px + env(safe-area-inset-bottom,0px))}}
+@media (max-width:720px){.cam{width:44px;height:44px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom,0px))}.cam svg{width:32px;height:32px}}
 /* Prep room: the fish shop's back counter — tiled wall, brushed stainless steel bench */
 .shop{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:0;transition:opacity .7s ease;
   background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(40,52,60,.16)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='112' height='56'%3E%3Crect width='112' height='56' fill='%23dfe4e5'/%3E%3Crect x='1' y='1' width='110' height='26' rx='2' fill='%23f7f8f8'/%3E%3Crect x='1' y='29' width='54' height='26' rx='2' fill='%23f7f8f8'/%3E%3Crect x='57' y='29' width='54' height='26' rx='2' fill='%23f7f8f8'/%3E%3C/svg%3E");background-color:#eef1f1}
@@ -255,17 +255,22 @@ body.hose-on .hosebtn .hosehead{opacity:0}
 .mk.hi text{fill:var(--mist-top)}
 @keyframes mkin{to{opacity:1}}
 [dir="rtl"] .tags,[dir="rtl"] .cols h2{letter-spacing:0}
+/* iPhone, upright: title on top, the fish big in the middle over the globe, the fish strip just above the two titles */
 @media (max-width:720px){
   .lower{grid-template-columns:minmax(0,1fr);gap:16px}
-  .app{height:auto;min-height:0}
-  .flist{overflow-y:visible}
-  #fish{flex:none;height:200px}
-  .grid{grid-template-columns:minmax(0,1fr);gap:16px}
-  .flist{flex-direction:row;overflow-x:auto;gap:18px;padding-bottom:6px}
-  .fitem{flex-direction:column;gap:4px;font-size:12px;white-space:nowrap}
-  .stage{flex:none}
+  .app{height:100%;min-height:0;padding-block:8px calc(70px + env(safe-area-inset-bottom,0px))}
+  .grid{display:flex;flex-direction:column;gap:6px;min-height:0}
+  main{order:1;flex:1;min-height:0}
+  .stage{flex:1;min-height:0;padding:0}
+  #fish{flex:1;min-height:0;height:auto}
+  .floater svg{height:100%!important;max-width:none!important}
+  .flist{order:2;flex:none;flex-direction:row;overflow-x:auto;overflow-y:hidden;gap:6px;padding:4px 2px 2px;margin-inline:calc(-1*max(16px,env(safe-area-inset-left,0px)));padding-inline:16px;
+    scroll-snap-type:x proximity;scrollbar-width:none;transform:none!important;-webkit-mask:linear-gradient(90deg,transparent,#000 16px,#000 calc(100% - 16px),transparent);mask:linear-gradient(90deg,transparent,#000 16px,#000 calc(100% - 16px),transparent)}
+  .flist::-webkit-scrollbar{display:none}
+  .fitem{flex:none;width:76px;flex-direction:column;gap:3px;font-size:11px;white-space:normal;line-height:1.2;text-align:center;scroll-snap-align:center;padding:6px 0}
+  .fitem .thumb{width:60px;height:28px}
+  .fitem .name{min-height:2.4em;display:flex;align-items:flex-start;justify-content:center}
   .cols{grid-template-columns:minmax(0,1fr);gap:8px}
-  .note{position:static;margin-top:10px;text-align:center;max-width:none}
 }
 /* Phones */
 body.prep,body.prep .prep-layer,body.prep .pfish{touch-action:none;-webkit-user-select:none;user-select:none}
@@ -274,7 +279,10 @@ body.prep,body.prep .prep-layer,body.prep .pfish{touch-action:none;-webkit-user-
   header>span:first-child{display:none}
   .brand{font-size:19px;letter-spacing:.24em;margin-inline-end:-.24em;padding-top:6px;text-align:start;white-space:nowrap}
   .langs{gap:6px}.langs button,.langs button svg{width:20px;height:20px}
-  .bnav{gap:28px;bottom:calc(18px + env(safe-area-inset-bottom,0px))}.bnav button{font-size:17px}
+  .bnav{gap:20px;left:max(16px,env(safe-area-inset-left,0px));right:66px;transform:none;justify-content:center;bottom:calc(20px + env(safe-area-inset-bottom,0px))}.bnav button{font-size:16px}
+  .prep-layer .board{height:66vh}
+  .sheet-bg .sheet:not(.camv){background:rgba(251,250,246,.93)}
+  .tools{bottom:calc(100% + 10px)}
   .sheet{padding-left:20px!important;padding-right:20px!important}
   .sheet .x{top:8px}
   .sheet .row{gap:8px}
@@ -542,10 +550,11 @@ const GL=(()=>{const cv=$('globe'),g=cv.getContext('webgl',{premultipliedAlpha:f
   let lam=0,phi=.35,mix=0,slot=0,anim=null,want=-1;
   function size(){const k=Math.min(devicePixelRatio||1,1.5);cv.width=innerWidth*k;cv.height=innerHeight*k;g.viewport(0,0,cv.width,cv.height);draw()}
   function draw(){const k=cv.width/innerWidth,st=document.querySelector('.stage').getBoundingClientRect();
-    const R=Math.max(innerHeight*.68,Math.min(st.width*.62,innerHeight*.9)),cy=innerHeight*.56;
+    const mob=innerWidth<=720,fr=$('fish').getBoundingClientRect();
+    const R=mob?innerWidth*.78:Math.max(innerHeight*.68,Math.min(st.width*.62,innerHeight*.9)),cy=mob?fr.top+fr.height*.55:innerHeight*.56;
     // keep the fish list just outside the globe's left edge (never past the screen edge)
-    const fl=$('list');fl.style.transform='';const lr=fl.getBoundingClientRect(),sh=-(lr.left-14);fl.style.transform=`translateX(${sh}px)`;
-    const cx=Math.max(st.left+st.width/2,lr.right+sh+18+R);
+    const fl=$('list');let cx;if(mob){fl.style.transform='';cx=innerWidth/2}else{fl.style.transform='';const lr=fl.getBoundingClientRect(),sh=-(lr.left-14);fl.style.transform=`translateX(${sh}px)`;
+    cx=Math.max(st.left+st.width/2,lr.right+sh+18+R)}
     g.clearColor(0,0,0,0);g.clear(g.COLOR_BUFFER_BIT);g.uniform2f(U('C'),cx*k,(innerHeight-cy)*k);g.uniform1f(U('RAD'),R*k);
     g.uniform1f(U('LAM'),lam);g.uniform1f(U('PHI'),phi);g.uniform1f(U('M'),slot?1-mix:mix);g.drawArrays(g.TRIANGLE_STRIP,0,4)}
   function go(i){if(i===want)return;want=i;const f=GLB.f[i],next=slot^1;(next?r1:r0)(f.img);
@@ -576,7 +585,8 @@ function layoutSheet(){const fe=$('fish'),sr=$('sRuler');fe.style.transform='';i
   $('sheetBg').style.paddingLeft=(innerWidth>760?Math.ceil($('list').getBoundingClientRect().right+16):0)+'px';
   const s=$('sheet'),cs=getComputedStyle(s),contentH=s.offsetHeight-parseFloat(cs.paddingTop),textTop=innerHeight-contentH;
   const barY=Math.min(fb+8,textTop-46);s.style.paddingTop=Math.max(56,textTop-(barY-26))+'px';
-  sr.style.left=(left+(x0-10)/380*dw)+'px';sr.style.width=(w/380*dw)+'px';sr.style.top=barY+'px';
+  let rl=left+(x0-10)/380*dw,rw=w/380*dw;if(innerWidth<=720){const lo=52,hi=innerWidth-52;const nl=Math.max(rl,lo),nr=Math.min(rl+rw,hi);rl=nl;rw=nr-nl}
+  sr.style.left=rl+'px';sr.style.width=rw+'px';sr.style.top=barY+'px';
   const sp=sr.querySelector('span');sp.dir=RTL[lang]?'rtl':'ltr';sp.innerHTML=`${UI.len[lang]} · <b dir="ltr">${L[0]}–${L[1]}</b> ${UI[L[2]||'cm'][lang]}`;sr.classList.add('on')}
 function openSheet(p){sheetP=p;const bg=$('sheetBg'),s=$('sheet');s.dir=RTL[lang]?'rtl':'ltr';s.innerHTML=sheetHTML();bg.hidden=false;document.body.classList.add('sheet-open');
   layoutSheet();requestAnimationFrame(()=>bg.classList.add('on'));s.querySelector('.x').focus()}
@@ -588,7 +598,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&sheetP){e.stopImmed
 function bnavText(){$('camBtn').setAttribute('aria-label',UI.camL[lang]);$('camBtn').title=UI.camL[lang];const b=$('bnav');b.dir=RTL[lang]?'rtl':'ltr';b.querySelector('[data-p=rec]').textContent=UI.qRec[lang];b.querySelector('[data-p=kit]').textContent=UI.qKit[lang];
   if(sheetP){const s=$('sheet');s.dir=RTL[lang]?'rtl':'ltr';s.innerHTML=sheetHTML()}}
 const ATLR=[['MED','EATL'],['MED','EATL'],['MED','EATL'],['WARM'],['MED','BLACK','ATL'],['WARM'],['MED','EATL'],['OCEANS'],['NATL','FARM'],['AFR','FARM'],['EURASIA','FARM']];
-const _render=render;render=function(a){_render(a);bnavText();requestAnimationFrame(()=>{placeRuler();atlas()})};
+const _render=render;render=function(a){_render(a);bnavText();if(innerWidth<=720){const it=$('list').children[cur];if(it)it.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'})}requestAnimationFrame(()=>{placeRuler();atlas()})};
 addEventListener('resize',placeRuler);
 render(true);
 // Prep mode: tap the fish's body and it settles onto a cutting board.
