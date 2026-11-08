@@ -813,14 +813,44 @@ document.addEventListener('pointerout',e=>{const t=e.target.closest('[data-k]');
   function rank(p,R){return R.map((r,i)=>{if(!r)return{i,s:1e9};let c=0;for(let k=0;k<p.hist.length;k++){const a=p.hist[k],b=r.hist[k];if(a+b>0)c+=(a-b)*(a-b)/(a+b)}
     let pa=0,pb=0;for(let k=0;k<14;k++){pa+=Math.abs(p.prof[k]-r.prof[k]);pb+=Math.abs(p.prof[13-k]-r.prof[k])}
     return{i,s:c+.55*Math.abs(Math.log(p.ar/r.ar))+.05*Math.min(pa,pb)}}).sort((a,b)=>a.s-b.s)}
+
+  // Template match: slide each fish picture (several sizes, both directions) over the photo and score the masked
+  // correlation of brightness and colour. This is what finds a fish photographed off a screen or a printout.
+  let tpl=null;
+  async function getTpl(){if(tpl)return tpl;tpl=[];for(let i=0;i<F.length;i++){const src=F[i].ph&&F[i].ph.icon;if(!src){tpl.push(null);continue}
+      const im=await load(src),c=document.createElement('canvas'),x=c.getContext('2d',{willReadFrequently:true});c.width=im.width;c.height=im.height;x.drawImage(im,0,0);tpl.push({im,w:im.width,h:im.height})}return tpl}
+  function grab(img,w,h,flip){const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d',{willReadFrequently:true});
+    if(flip){x.translate(w,0);x.scale(-1,1)}x.drawImage(img,0,0,w,h);return x.getImageData(0,0,w,h).data}
+  function chans(d,n,mask){const L=new Float32Array(n),A=new Float32Array(n),B=new Float32Array(n),M=new Uint8Array(n);
+    for(let k=0;k<n;k++){const r=d[k*4],g=d[k*4+1],b=d[k*4+2];L[k]=.3*r+.59*g+.11*b;A[k]=r-g;B[k]=(r+g)/2-b;M[k]=mask?d[k*4+3]>140:1}return{L,A,B,M}}
+  // Slide each fish picture over the photo (several sizes, both directions) and score how well brightness and
+  // colour line up (masked correlation per channel). Robust to a photo of a screen or a printout.
+  const TPLC={};
+  function variant(i,tw,flip){const key=i+'_'+tw+'_'+flip;if(TPLC[key])return TPLC[key];const T=tpl[i],th=Math.max(4,Math.round(T.h*tw/T.w));
+    const C=chans(grab(T.im,tw,th,flip),tw*th,true),idx=[];for(let k=0;k<tw*th;k++)if(C.M[k])idx.push(k);const n=idx.length;
+    const off=new Int32Array(n),tl=new Float32Array(n),ta=new Float32Array(n),tb=new Float32Array(n);let mL=0,mA=0,mB=0;
+    for(const k of idx){mL+=C.L[k];mA+=C.A[k];mB+=C.B[k]}mL/=n;mA/=n;mB/=n;let nL=0,nA=0,nB=0;
+    idx.forEach((k,j)=>{tl[j]=C.L[k]-mL;ta[j]=C.A[k]-mA;tb[j]=C.B[k]-mB;nL+=tl[j]**2;nA+=ta[j]**2;nB+=tb[j]**2;off[j]=k});
+    return TPLC[key]={tw,th,n,idx:off,tl,ta,tb,nL:Math.sqrt(nL)||1,nA:Math.sqrt(nA)||1,nB:Math.sqrt(nB)||1}}
+  function match(img,R){const PW=100,ph=Math.round(img.height*PW/img.width);if(ph<12)return rank(photoFeat(img),R);
+    const P=chans(grab(img,PW,ph,false),PW*ph,false),out=[];
+    for(let i=0;i<F.length;i++){if(!tpl[i]){out.push({i,s:1e9});continue}let best=-9;
+      for(const sc of [.3,.38,.46,.55,.65,.75,.85])for(const flip of [false,true]){const tw=Math.round(PW*sc),V=variant(i,tw,flip);if(V.th>=ph||V.n<30)continue;
+        const pos=new Int32Array(V.n);for(let j=0;j<V.n;j++){const k=V.idx[j];pos[j]=((k/tw)|0)*PW+(k%tw)}
+        for(let oy=0;oy+V.th<=ph;oy++)for(let ox=0;ox+tw<=PW;ox++){const o=oy*PW+ox;let sl=0,sa=0,sb=0,ql=0,qa=0,qb=0,cl=0,ca=0,cb=0;
+          for(let j=0;j<V.n;j++){const q=o+pos[j],l=P.L[q],a=P.A[q],b=P.B[q];sl+=l;sa+=a;sb+=b;ql+=l*l;qa+=a*a;qb+=b*b;cl+=l*V.tl[j];ca+=a*V.ta[j];cb+=b*V.tb[j]}
+          const n=V.n,vl=Math.sqrt(Math.max(1e-6,ql-sl*sl/n)),va=Math.sqrt(Math.max(1e-6,qa-sa*sa/n)),vb=Math.sqrt(Math.max(1e-6,qb-sb*sb/n));
+          const s=(cl/(vl*V.nL)+ca/(va*V.nA)+cb/(vb*V.nB))/3;if(s>best)best=s}}
+      out.push({i,s:-best})}
+    return out.sort((a,b)=>a.s-b.s)}
   btn.onclick=()=>{inp.value='';inp.click()};
   function close(){bg.classList.remove('on');setTimeout(()=>{bg.hidden=true;box.innerHTML='';if(url){URL.revokeObjectURL(url);url=null}},300)}
   inp.onchange=async()=>{const f=inp.files&&inp.files[0];if(!f)return;url=URL.createObjectURL(f);box.dir=RTL[lang]?'rtl':'ltr';
     box.innerHTML=`<button type="button" class="x" aria-label="${UI.close[lang]}">×</button><div class="scanwrap"><img src="${url}" alt=""><i class="scanbar"></i></div><p class="camst">${UI.camScan[lang]}</p>`;
     bg.hidden=false;requestAnimationFrame(()=>bg.classList.add('on'));
-    try{const [img,R]=await Promise.all([load(url),getRefs()]),t0=performance.now(),res=rank(photoFeat(img),R);
+    try{const [img,R]=await Promise.all([load(url),getRefs()]),t0=performance.now();await getTpl();const res=match(img,R);
       await new Promise(r=>setTimeout(r,Math.max(0,1500-(performance.now()-t0))));if(bg.hidden)return;
-      const best=res[0],gap=res[1].s-best.s,conf=gap>.25?0:gap>.1?1:2,i=best.i;
+      const best=res[0],gap=res[1].s-best.s,conf=gap>.08?0:gap>.03?1:2,i=best.i;
       box.querySelector('.scanwrap').classList.add('done');
       box.querySelector('.camst').outerHTML=`<div class="camres"><div class="kick">${UI.camFound[lang]}</div><h2>${F[i].n[lang]}</h2>
         <div class="sub"><em dir="ltr">${F[i].lat}</em><span>${[UI.scHigh,UI.scMed,UI.scLow][conf][lang]}</span></div>
